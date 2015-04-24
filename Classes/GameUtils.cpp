@@ -1,4 +1,4 @@
-#include "GameUtils.h"
+﻿#include "GameUtils.h"
 #include "GameData.h"
 #include "GameScene.h"
 USING_NS_CC;
@@ -65,11 +65,16 @@ float GameUtils::getVisibleHeight(){
 }
 
 float GameUtils::getLevelScale(Sprite* sprite) {
-	//���˸���10  Ԫ��֮���10
+	//两端各空10  元素之间空10
 	//float spaceSize = GameData::getInstance()->getlevelSpace();
 	float scaleRate = (VISIBLE_WIDTH - level_space * 2- g_EachLineCount *2*level_space)/(sprite->getContentSize().width * g_EachLineCount);
 
 	return scaleRate;
+}
+
+//根据block 实际像素大小和屏幕大小，算出要缩放的比例
+float GameUtils::getBlockScale(Sprite* sprite,float x_count) {
+	return (VISIBLE_WIDTH - level_space * 2)/(sprite->getContentSize().width * x_count);
 }
 
 float GameUtils::getPageScale(Sprite* page,Sprite* sprite) {

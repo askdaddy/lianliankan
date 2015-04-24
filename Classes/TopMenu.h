@@ -1,4 +1,4 @@
-#ifndef _TOPMENU_H_
+﻿#ifndef _TOPMENU_H_
 #define _TOPMENU_H_
 #include "cocos2d.h"
 
@@ -9,10 +9,14 @@ public:
 	virtual bool init();
 	CREATE_FUNC(TopMenu);
 	void refresh();
+	void overGame();
 private:
 	void pauseGame();
 	
 
 	Label* level;
+	Sprite* header_bg;
+	Menu* menu;
+	MenuItemImage* startBtn;
 };
 #endif

@@ -1,12 +1,4 @@
-//
-//  PauseScene.mm
-//  MR_BOMB
-//
-//  Created by yunong on 1/22/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
-//
-
-#include "PauseLayer.h"
+﻿#include "PauseLayer.h"
 #include "SimpleAudioEngine.h"
 
 #include "Audio.h"
@@ -17,30 +9,33 @@
 
 USING_NS_CC;
 
-//����һ��CCrenderTexture   
-//�൱��һ���������е���Ϸ�Ľ�ͼ��Ϊ�����ͣ�Ի���ı���   
-//�����Ϳ��������ǶԻ�������Ϸ����֮�ϣ�һ����Ϸ���ж���������д�ġ�  
+PauseLayer::~PauseLayer() {
+
+}
+
+//传入一个CCrenderTexture   
+//相当于一个正在运行的游戏的截图作为这个暂停对话框的背景   
+//这样就看起来像是对话框在游戏界面之上，一般游戏当中都是这样子写的。  
 CCScene* PauseLayer::scene(CCRenderTexture* sqr)
 {
 	CCScene *scene = CCScene::create();
 	PauseLayer *layer = PauseLayer::create();
-	scene->addChild(layer, 1);//����Ϸ������棬���ǻ�Ҫ��������Ű�ť  
+	scene->addChild(layer, 1); 
 
-
-	//���Ӳ��֣�ʹ��Game�����н�ͼ��sqr����ͼƬ����Sprite  
-	//����Sprite��ӵ�GamePause��������  
-	//�õ����ڵĴ�С  
-	CCSize visibleSize = CCDirector::sharedDirector()->getVisibleSize();
+	//增加部分：使用Game界面中截图的sqr纹理图片创建Sprite  
+    //并将Sprite添加到GamePause场景层中  
+    //得到窗口的大小  
 	CCSprite *back_spr = CCSprite::createWithTexture(sqr->getSprite()->getTexture());
-	back_spr->setPosition(ccp(visibleSize.width / 2, visibleSize.height / 2)); //����λ��,������������λ�á�  
-	back_spr->setFlipY(true);            //��ת����ΪUI�����OpenGL���겻ͬ  
-	back_spr->setColor(Color3B::GRAY); //ͼƬ��ɫ���ɫ  
+	back_spr->setPosition(Vec2(VISIBLE_WIDTH / 2, VISIBLE_HEIGHT / 2)); //放置位置,这个相对于中心位置。  
+	back_spr->setFlipY(true);           //翻转，因为UI坐标和OpenGL坐标不同  
+	back_spr->setColor(Color3B::GRAY); //图片颜色变灰色  
 	scene->addChild(back_spr);
 
 
-	//�����Ϸ��ͣ����Сͼ�������Ű�ť  
-	CCSprite *back_small_spr = CCSprite::create("back_pause.png");
-	back_small_spr->setPosition(ccp(visibleSize.width / 2, visibleSize.height / 2)); //����λ��,������������λ�á�  
+	CCSprite *back_small_spr = CCSprite::create("pause_bg.png");
+	back_small_spr->setScaleX(GetXScaleRate);
+	back_small_spr->setScaleX(GetYScaleRate);
+	back_small_spr->setPosition(ccp(VISIBLE_WIDTH /2 , VISIBLE_HEIGHT / 2)); 
 	scene->addChild(back_small_spr);
 
 
@@ -54,34 +49,36 @@ bool PauseLayer::init()
 	{
 		return false;
 	}
-	//�õ����ڵĴ�С  
-	CCSize visibleSize = CCDirector::sharedDirector()->getVisibleSize();
-	//ԭ������  
-	CCPoint origin = CCDirector::sharedDirector()->getVisibleOrigin();
+	
+	CCPoint origin = CCDirector::getInstance()->getVisibleOrigin();
 
-	//������Ϸ��ť  
-	CCMenuItemImage *pContinueItem = CCMenuItemImage::create(
-		"pause_continue.png",
-		"pause_continue.png",
-		CC_CALLBACK_0(PauseLayer::menuContinueCallback,this));
-
-	pContinueItem->setPosition(ccp(visibleSize.width / 2, visibleSize.height / 2 + 30));
-
-	//���¿�ʼ��Ϸ��ť  
+		
 	CCMenuItemImage *pRestartItem = CCMenuItemImage::create(
-		"pause_restart.png",
-		"pause_restart.png",
+		"pause_again.png",
+		"pause_again.png",
 		CC_CALLBACK_0(PauseLayer::menuRestart, this));
+	pRestartItem->setScaleX(GetXScaleRate);
+	pRestartItem->setScaleX(GetYScaleRate);
+	pRestartItem->setPosition(Vec2(VISIBLE_WIDTH / 2, VISIBLE_HEIGHT / 2));
+	
 
-	pRestartItem->setPosition(ccp(visibleSize.width / 2, visibleSize.height / 2 - 20));
+	CCMenuItemImage *pContinueItem = CCMenuItemImage::create(
+		"pause_play.png",
+		"pause_play.png",
+		CC_CALLBACK_0(PauseLayer::menuContinueCallback,this));
+	pContinueItem->setScaleX(GetXScaleRate);
+	pContinueItem->setScaleX(GetYScaleRate);
+	pContinueItem->setPosition(Vec2(VISIBLE_WIDTH / 2, VISIBLE_HEIGHT / 2 + pRestartItem->boundingBox().size.height + level_space));
 
-	//��������  
+
+
 	CCMenuItemImage *pLoginItem = CCMenuItemImage::create(
-		"pause_login.png",
-		"pause_login.png",
+		"pause_level.png",
+		"pause_level.png",
 		CC_CALLBACK_0(PauseLayer::menuLogin, this));
-
-	pLoginItem->setPosition(ccp(visibleSize.width / 2, visibleSize.height / 2 - 70));
+	pLoginItem->setScaleX(GetXScaleRate);
+	pLoginItem->setScaleX(GetYScaleRate);
+	pLoginItem->setPosition(Vec2(VISIBLE_WIDTH / 2, VISIBLE_HEIGHT / 2 - pRestartItem->boundingBox().size.height - level_space));
 
 
 	// create menu, it's an autorelease object  
@@ -98,26 +95,26 @@ void PauseLayer::menuContinueCallback()
 	
 	Audio::getInstance()->playButtonClick();
 	CCDirector::sharedDirector()->popScene();
-	//removeFromParentAndCleanup(true);
+	removeFromParentAndCleanup(true);
 	CCDirector::sharedDirector()->resume();
 
 }
 
-//���¿�ʼ��Ϸ  
+
 void  PauseLayer::menuRestart()
 {
 	Audio::getInstance()->playButtonClick();
-	//removeFromParentAndCleanup(true);
 	CCDirector::sharedDirector()->popScene();
+	removeFromParentAndCleanup(true);
 	CCDirector::sharedDirector()->resume();
 	Director::getInstance()->replaceScene(TransitionFade::create(0.5, GameScene::create()));
 }
-//��������  
+
 void  PauseLayer::menuLogin()
 {
 	Audio::getInstance()->playButtonClick();
 	CCDirector::sharedDirector()->popScene();
-	//removeFromParentAndCleanup(true);
+	removeFromParentAndCleanup(true);
 	Director::sharedDirector()->resume();
 	Director::getInstance()->replaceScene(LevelSelectLayer::createScene());
 }

@@ -1,4 +1,4 @@
-#ifndef __LIANLIANKANX__GMEUTILS__
+﻿#ifndef __LIANLIANKANX__GMEUTILS__
 #define __LIANLIANKANX__GMEUTILS__
 
 #include "cocos2d.h"
@@ -15,6 +15,7 @@ public:
 	static float getVisibleWidth();
 	static float getVisibleHeight();
 	static float getLevelScale(Sprite* sprite);
+	static float getBlockScale(Sprite* sprite,float x_count);
 	static float getPageScale(Sprite* page,Sprite* sprite);
 	static float getSpaceSizeRate(int spCount);
 
@@ -35,4 +36,4 @@ public:
 #define GetPageScaleRate(page,sprite) GameUtils::getPageScale(Sprite* page,Sprite* sprite)
 #define GetSpaceSize(spCount) GameUtils::getSpaceSizeRate(int spCount)
 
-#endif;
+#endif
