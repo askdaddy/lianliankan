@@ -11,8 +11,12 @@
 #include "MapNode.h"
 #include "PauseLayer.h"
 #include "OverLayer.h"
+#include "MyJniHelper.h"
+#include "GameScene.h"
 
 #include <algorithm>
+#include <stdlib.h>
+
 using std::random_shuffle;
 
 USING_NS_CC_EXT;
@@ -25,6 +29,7 @@ GameLayer::GameLayer()
 	fill_count = 0;
 	preIndex = 0;
 	curIndex = 0;
+	clicked = false;
 }
 
 GameLayer::~GameLayer()
@@ -47,6 +52,15 @@ bool GameLayer::init()
 
 
 	this->initUI();
+
+	MyJniHelper::showBan(1);
+
+	//对手机返回键的监听 
+	auto listener = EventListenerKeyboard::create(); 
+	//和回调函数绑定 
+	listener->onKeyReleased = CC_CALLBACK_2(GameLayer::onKeyReleased,this); 
+	//添加到事件分发器中 
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener,this); 
 
 	return true;
 
@@ -79,14 +93,19 @@ void GameLayer::initData()
 		node1->imgid = 0;
 
 		if(index < grid_count*2) {
-			srand( (unsigned)time( NULL ) + index*rand()%1000 );
-			node->imgid = rand() % scope + 1;
+
+			//srand( (unsigned)time( NULL ) + index*rand()%1000 );
+			node->imgid = index %scope +1;
 			node1->imgid = node->imgid;
 			log("initData imgid = %d", node->imgid);
+			mapArray.pushBack(node);
+			mapArray.pushBack(node1);
+			index++;
+		} else {
+			mapArray.pushBack(node);
 		}
-		mapArray.pushBack(node);
-		mapArray.pushBack(node1);
-		index++;
+
+
 		log("initData index= %d", index);
 	}
 
@@ -97,6 +116,7 @@ void GameLayer::initData()
 	//	Director::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, 1, true);
 	auto _eventDispatcher = Director::getInstance()->getEventDispatcher();
 	auto touchListener = EventListenerTouchOneByOne::create();
+	auto listener = EventListenerKeyboard::create();
 	touchListener->onTouchBegan = CC_CALLBACK_2(GameLayer::onTouchBegan, this);//触摸开始
 	//touchListener->onTouchMoved = CC_CALLBACK_2(MapLayer::onTouchMoved, this);//触摸移动
 	touchListener->onTouchEnded = CC_CALLBACK_2(GameLayer::onTouchEnded, this);//触摸结束
@@ -107,6 +127,27 @@ void GameLayer::initData()
 
 
 }
+
+void GameLayer::onKeyReleased(EventKeyboard::KeyCode keyCode,Event * pEvent) 
+{ 
+	if (keyCode == EventKeyboard::KeyCode::KEY_MENU){
+		if(clicked) {
+			clicked= false;
+			//CCLog("doubleclick");
+			Director::getInstance()->end();
+			#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+				exit(0);
+			#endif
+		}else {
+			//延时0.25s执行（注意在这0.25s的延时过程中clicked已经为true），
+			//如果在这个过程中再次click，那么就执行上面的双击事件处理了
+			//否则，那么就执行下面的回调函数了，处理单击事件
+			scheduleOnce(schedule_selector(GameLayer::doubleClickState),0.25f);
+			clicked= true;
+		}
+	}
+
+} 
 
 void GameLayer::initImgSpriteSize()
 {
@@ -136,8 +177,10 @@ void GameLayer::initUI()
 	this->addChild(gameBg, -1);
 
 	//top Menu
-	menu = TopMenu::create();
-	this->addChild(menu);
+	//menu = TopMenu::create();
+	//menu->setgameLayer(this);
+	//this->addChild(menu);
+	this->initTopMenuUI();
 
 	srand( (unsigned)time(NULL));
 	random_shuffle(mapArray.begin(),mapArray.end());
@@ -145,6 +188,7 @@ void GameLayer::initUI()
 	block_top->setScale(GameData::getInstance()->getblockScale());
 	block_w = block_top->boundingBox().size.width;
 	block_h = block_top->boundingBox().size.height;
+	bottom_h = this->getStartH();
 	int block_index = 0;
 	int wIndex = 0;
 	for (Vector<MapNode*>::const_iterator it = mapArray.begin(); it != mapArray.end(); ++it)  {
@@ -168,13 +212,56 @@ void GameLayer::initUI()
 				log("windex = %d,= %d",wIndex,int(block_index / x_count));
 		}
 			
-		sprite->setPosition(ccp((block_w / 2) + block_w * wIndex+level_space, (block_h / 2) + int(block_index / x_count)*block_h+banner_height));
-		topSprite->setPosition(ccp((block_w / 2) + block_w * wIndex+level_space, (block_h / 2) + int(block_index / x_count)*block_h+banner_height));
-		log("init = %f, = %f",(block_w / 2) + block_w * wIndex+level_space,(block_h / 2) + int(block_index / x_count)*block_h);
+		sprite->setPosition(Vec2((block_w / 2) + block_w * wIndex+level_space, (block_h / 2) + int(block_index / x_count)*block_h+bottom_h));
+		topSprite->setPosition(Vec2((block_w / 2) + block_w * wIndex+level_space, (block_h / 2) + int(block_index / x_count)*block_h+bottom_h));
 		this->addChild(sprite, 2, TAG_START_SPRITE + block_index);
 		this->addChild(topSprite, 3, TAG_START_SPRITE *2 + block_index);
 		block_index++;
 	}
+}
+
+void GameLayer::initTopMenuUI()
+{
+	auto header_bg = Sprite::create("header_bg.png");
+	header_bg->setScaleX(GetXScaleRate);
+	header_bg->setScaleY(GetYScaleRate);
+	header_bg->setPosition(VISIBLE_WIDTH/2,VISIBLE_HEIGHT-header_bg->boundingBox().size.height/2);
+	this->addChild(header_bg,1);
+
+	//block_h = block_top->boundingBox().size.height;
+
+	float topH = VISIBLE_HEIGHT-header_bg->boundingBox().size.height/2;
+
+
+	auto levelSp = Sprite::create("header_level.png");
+	levelSp->setScaleX(GetXScaleRate);
+	levelSp->setScaleY(GetYScaleRate);
+	levelSp->setPosition(level_space+levelSp->boundingBox().size.width/2,topH);
+	this->addChild(levelSp,2);
+
+
+	auto level = Label::create(String::createWithFormat("%d", GameData::getInstance()->getChooseLevel())->_string, "Verdana-Bold",45*GetXScaleRate,Size(85*GetXScaleRate,65*GetYScaleRate),TextHAlignment::CENTER,TextVAlignment::CENTER);
+	level->setPosition(header_bg->boundingBox().size.width/4+level_space, topH);
+	this->addChild(level,2);
+
+
+
+	auto startBtn = MenuItemImage::create("btn_pause.png", "btn_pause.png", CC_CALLBACK_0(GameLayer::pauseGame, this));
+	startBtn->setScaleX(GetXScaleRate);
+	startBtn->setScaleY(GetYScaleRate);
+	startBtn->setPosition(Vec2(VISIBLE_WIDTH - startBtn->boundingBox().size.width/2 - level_space,topH));
+
+	auto promptBtn = MenuItemImage::create("btn_hint.png", "btn_hint.png", CC_CALLBACK_0(GameLayer::promptGame, this));
+	promptBtn->setScaleX(GetXScaleRate);
+	promptBtn->setScaleY(GetYScaleRate);
+	promptBtn->setPosition(Vec2(VISIBLE_WIDTH - promptBtn->boundingBox().size.width/2 - startBtn->boundingBox().size.width-level_space *2,topH));
+
+
+
+	auto top_menu = Menu::create(promptBtn,startBtn, NULL);
+	top_menu->setPosition(Vec2::ZERO);
+	//menu->alignItemsVertically();
+	this->addChild(top_menu,2);
 }
 
 //根据当前等级生成随机数
@@ -183,6 +270,20 @@ void GameLayer::initFillBlock() {
 	//int level = GameData::getInstance()->getChooseLevel();
 	//fill_count = 4+(level/10)*2;
 	need_score = grid_count;
+}
+
+
+//为了居中，空余 取半
+float GameLayer::getStartH() {
+	auto headerbg = Sprite::create("header_bg.png");
+	headerbg->setScaleX(GetXScaleRate);
+	headerbg->setScaleY(GetYScaleRate);
+	//float al_space =VISIBLE_HEIGHT  - (headerbg->boundingBox().size.height + banner_height);
+	float block_allH = block_h*y_count;
+	if(block_allH >= (VISIBLE_HEIGHT-(headerbg->boundingBox().size.height + banner_height)))
+		return banner_height;
+
+	return (VISIBLE_HEIGHT - block_allH)/2;
 }
 
 
@@ -195,8 +296,8 @@ Vec2 GameLayer::pointOfView(Vec2 point)
 	int y = -1;
 	if (point.x > level_space && point.x < (x_count * block_w+level_space))
 		x = (point.x-level_space) / (block_w);
-	if (point.y > banner_height && point.y < y_count * block_h+banner_height)
-		y = (point.y-banner_height) / (block_h );
+	if (point.y > bottom_h && point.y < y_count * block_h+bottom_h)
+		y = (point.y-bottom_h) / (block_h );
 	log("debug %f,%f",point.x,point.y);
 	return Vec2(x, y);
 }
@@ -248,6 +349,15 @@ void GameLayer::clearNode(Vec2 point)
 //判断两个是否可以消除
 bool GameLayer::canClearTwo(Vec2 pointpre, Vec2 pointcurrent)
 {
+	if (this->isValiableNode(pointpre) == false || this->isValiableNode(pointcurrent) == false)
+		return false;
+
+	if (this->isEmptyNode(pointpre) || this->isEmptyNode(pointcurrent))
+		return false;
+	
+	if (this->isSamePoints(pointpre, pointcurrent))
+		return false;
+	
 	bool bMatch = false;
 	int pre = this->indexFromPoint(pointpre);
 	int current = this->indexFromPoint(pointcurrent);
@@ -405,7 +515,7 @@ void GameLayer::clearAnimation(float dt)
 		auto point = linePoints[i];
 		auto sprite = Sprite::create("block/"+fileName);
 		sprite->setScale(GameData::getInstance()->getblockScale());
-		sprite->setPosition(ccp((block_w / 2) + block_w * point.x+level_space, (block_h / 2) + point.y*block_h+banner_height));
+		sprite->setPosition(ccp((block_w / 2) + block_w * point.x+level_space, (block_h / 2) + point.y*block_h+bottom_h));
 		this->addChild(sprite, 3, TAG_START_SPRITE*4 + i);
 		sprite->runAction(this->getSpecialEffectsAnimation());
 	}
@@ -419,6 +529,8 @@ void GameLayer::clearAnimation(float dt)
 	log("current_score  %d", current_score);
 	log("need_socre %d", need_score);
 	if (current_score >= need_score) {
+		if(GameData::getInstance()->getChooseLevel() % GameData::getInstance()->getFreq() == 0)//设置广告频率
+			MyJniHelper::showBan(0);
 		this->scheduleOnce(schedule_selector(GameLayer::gameOverLayOut),0.5);
 		//this->gameOverLayOut();
 		//this->gameOverSettlement();
@@ -431,7 +543,7 @@ FiniteTimeAction* GameLayer::getSpecialEffectsAnimation()
 {
 	//作用创建一个旋转的动作
 	//参数1：旋转的时间  参数2：旋转饿角度  0 - 360
-    ActionInterval * rotateby = CCRotateBy::create(0.4, 360);
+    ActionInterval * rotateby = CCRotateBy::create(0.2, 360);
     //CCActionInterval*  actionByBack = actionBy->reverse();                            //回复
 	ActionInterval * scaleto = CCScaleTo ::create(0, 0.3);
 	//    作用：创建一个渐变消失的动作
@@ -690,7 +802,90 @@ void GameLayer::gameOverSettlement()
 
 void GameLayer::gameOverLayOut(float dt)
 {
-	menu->overGame();
+
+	this->overGame();
+}
+
+//提示，没有如果则说明是死局，就重新开始
+void GameLayer::promptGame()
+{
+	//canClearTwo()
+	//先清除之前选中的状态
+	auto isfound = false;
+	int game_index = 0;
+	for(int index_y = 0; index_y < y_count; index_y++) {
+		for(int index_x = 0; index_x < x_count; index_x++) {
+			((Sprite *)this->getChildByTag(TAG_START_SPRITE*2 + this->indexFromPoint(Vec2(index_x,index_y))))->setVisible(false);
+			if(!isfound)
+				game_index = this->findCanClear(index_x,index_y);
+			if(!isfound && game_index){
+				isfound = true;
+				((Sprite *)this->getChildByTag(TAG_START_SPRITE*2 + this->indexFromPoint(Vec2(index_x,index_y))))->setVisible(true);
+			}
+			if(isfound && this->indexFromPoint(Vec2(index_x,index_y)) ==  game_index) {
+				((Sprite *)this->getChildByTag(TAG_START_SPRITE*2 + this->indexFromPoint(Vec2(index_x,index_y))))->setVisible(true);
+			}
+
+		}
+	}
+
+	if(!isfound) {
+		Director::getInstance()->replaceScene(TransitionFade::create(0.5, GameScene::create()));
+	}
+}
+
+
+int GameLayer::findCanClear(int x, int y)
+{
+	for(int index_y = 0; index_y < y_count; index_y++) {
+		for(int index_x = 0; index_x < x_count; index_x++) {
+			if(this->canClearTwo(Vec2(x,y),Vec2(index_x,index_y))){
+				((Sprite *)this->getChildByTag(TAG_START_SPRITE*2 + this->indexFromPoint(Vec2(index_x,index_y))))->setVisible(true);
+				return index_y*x_count + index_x;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+
+void GameLayer::pauseGame() {
+	Audio::getInstance()->playButtonClick();
+	
+	//CCSize visibleSize = CCDirector::getInstance()->getVisibleSize();
+	CCRenderTexture *renderTexture = CCRenderTexture::create(VISIBLE_WIDTH, VISIBLE_HEIGHT);
+ 
+	renderTexture->begin();
+	this->getParent()->visit();
+	renderTexture->end();
+
+	//暂停页面
+	CCDirector::getInstance()->pushScene(PauseLayer::scene(renderTexture));
+}
+
+//结束版面
+void GameLayer::overGame() {
+
+	//CCSize visibleSize = CCDirector::getInstance()->getVisibleSize();
+	CCRenderTexture *renderTexture = CCRenderTexture::create(VISIBLE_WIDTH, VISIBLE_HEIGHT);
+ 
+	renderTexture->begin();
+	this->getParent()->visit();
+	renderTexture->end();
+
+	//结束页面
+	CCDirector::getInstance()->pushScene(OverLayer::scene(renderTexture));
+}
+
+void GameLayer::doubleClickState(float tt)
+{
+    if(clicked) {
+        clicked = false;
+		//CCLog("singleclick");
+    }
+
 }
 
 

@@ -2,7 +2,6 @@
 #define _LIANLIANKAN_GAMELAYER_H_
 
 #include "cocos2d.h"
-#include "TopMenu.h"
 #include "PauseLayer.h"
 #include "MapNode.h"
 USING_NS_CC;
@@ -12,14 +11,17 @@ public:
 	virtual bool init();
 	virtual bool onTouchBegan(Touch *pTouch, Event *pEvent);
 	virtual void onTouchEnded(Touch *pTouch, Event *pEvent);
+	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode,Event * pEvent);
 	CREATE_FUNC(GameLayer);
 	GameLayer();
 	~GameLayer();
 
 	CC_SYNTHESIZE(float,block_w,blockW);//缩放之后的大小
 	CC_SYNTHESIZE(float,block_h,blockH);
+	CC_SYNTHESIZE(float,bottom_h,bottomH);//距离底部高度
 private:
 	void initUI(void);
+	void initTopMenuUI();
 
 	void initData(void);
 
@@ -65,6 +67,14 @@ private:
 
 	void addLinePoints(Vec2 a, Vec2 b,bool X);
 
+	float getStartH();
+
+	void doubleClickState(float tt);
+
+	void pauseGame();//游戏暂停
+	void promptGame(); //游戏提示
+	void overGame();//游戏结束
+
 	Vec2 prePoint; //前一个点坐标
 	Vec2 location; //当前点坐标
 	int preIndex;//前一个index
@@ -84,13 +94,13 @@ private:
 	int fill_count;
 	//PauseLayer *pauseLayer;
 
-	TopMenu* menu;
 	Sprite* block_top;
 
 	float x_count;
 	float y_count;
 	int grid_count;
 	int scope;
+	bool clicked;
 
 
 };

@@ -14,6 +14,7 @@ LOCAL_SRC_FILES := hellocpp/main.cpp \
 			  ../../Classes/AppDelegate.cpp \
 			  ../../Classes/HelloWorldScene.cpp \
 			  ../../Classes/Audio.cpp \
+			  ../../Classes/MyJniHelper.cpp \
 			  ../../Classes/FloatWord.cpp \
 			  ../../Classes/GameData.cpp \
 			  ../../Classes/GameLayer.cpp \
@@ -27,8 +28,7 @@ LOCAL_SRC_FILES := hellocpp/main.cpp \
 			  ../../Classes/MenuScene.cpp \
 			  ../../Classes/OverLayer.cpp \
 			  ../../Classes/PauseLayer.cpp \
-			  ../../Classes/SetMusic.cpp \
-			  ../../Classes/TopMenu.cpp
+			  ../../Classes/SetMusic.cpp 
 				   
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes

@@ -118,6 +118,7 @@ set(GAME_SRC
   Classes/HelloWorldScene.cpp
   Classes/Audio.cpp
   Classes/FloatWord.cpp
+  Classes/MyJniHelper.cpp
   Classes/GameData.cpp
   Classes/GameLayer.cpp
   Classes/GameScene.cpp
@@ -131,7 +132,6 @@ set(GAME_SRC
   Classes/OverLayer.cpp
   Classes/PauseLayer.cpp
   Classes/SetMusic.cpp
-  Classes/TopMenu.cpp
   ${PLATFORM_SPECIFIC_SRC}
 )
 
@@ -140,6 +140,7 @@ set(GAME_HEADERS
   Classes/HelloWorldScene.h
   Classes/Audio.h
   Classes/FloatWord.h
+  Classes/MyJniHelper.h
   Classes/GameData.h
   Classes/GameLayer.h
   Classes/GameScene.h
@@ -153,7 +154,6 @@ set(GAME_HEADERS
   Classes/OverLayer.h
   Classes/PauseLayer.h
   Classes/SetMusic.h
-  Classes/TopMenu.h
   ${PLATFORM_SPECIFIC_HEADERS}
 )
 

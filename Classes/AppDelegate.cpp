@@ -34,12 +34,14 @@ bool AppDelegate::applicationDidFinishLaunching() {
         glview = GLViewImpl::create("Lian Lian Kan");
         director->setOpenGLView(glview);
     }
-	glview->setDesignResolutionSize(480, 800, ResolutionPolicy::SHOW_ALL);
+
+	glview->setDesignResolutionSize(640, 960, ResolutionPolicy::FIXED_WIDTH);
     // turn on display FPS
     director->setDisplayStats(false);
 
+
     // set FPS. the default value is 1.0/60 if you don't call this
-    director->setAnimationInterval(1.0 / 60);
+    //director->setAnimationInterval(1.0 / 60);
 
     // create a scene. it's an autorelease object
 	auto scene = MenuScene::create();
